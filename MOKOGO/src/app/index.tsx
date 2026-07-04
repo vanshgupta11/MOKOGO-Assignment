@@ -226,7 +226,7 @@ const styles = StyleSheet.create({
     marginBottom: 4,
   },
   cardMeta: {
-    color: "#444",
+    color: "#000",
     marginBottom: 2,
   },
 });
