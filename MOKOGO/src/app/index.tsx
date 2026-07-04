@@ -1,18 +1,28 @@
-import React, { useState, useMemo } from "react";
+import React, { useState, useMemo, useEffect } from "react";
 import {
   View,
   Text,
   TextInput,
   FlatList,
   Pressable,
+  ActivityIndicator,
   StyleSheet,
 } from "react-native";
-import data from "./_data";
+import  data  from "./_data";
 
 export default function Index() {
+  const [loading, setLoading] = useState(true);
   const [city, setCity] = useState("All");
   const [maxRent, setMaxRent] = useState("20000");
   const [gender, setGender] = useState("Any");
+  const [search, setSearch] = useState("");
+  const [sortAsc, setSortAsc] = useState(false);
+
+  // Simulate a fetch delay
+  useEffect(() => {
+    const timer = setTimeout(() => setLoading(false), 1000);
+    return () => clearTimeout(timer);
+  }, []);
 
   const cities = useMemo(() => {
     const unique = Array.from(new Set(data.map((item) => item.city)));
@@ -22,67 +32,79 @@ export default function Index() {
   const genders = ["Any", "Male", "Female"];
 
   const filteredData = useMemo(() => {
-    return data.filter((item) => {
+    const filtered = data.filter((item) => {
       const cityMatch = city === "All" || item.city === city;
       const rentMatch = item.rent <= Number(maxRent || 0);
       const genderMatch =
         gender === "Any" ||
         item.preferredGender === "Any" ||
         item.preferredGender === gender;
-      return cityMatch && rentMatch && genderMatch;
+      const searchMatch =
+        search.trim() === "" ||
+        item.title.toLowerCase().includes(search.trim().toLowerCase()) ||
+        item.locality.toLowerCase().includes(search.trim().toLowerCase());
+      return cityMatch && rentMatch && genderMatch && searchMatch;
     });
-  }, [city, maxRent, gender]);
+
+    if (sortAsc) {
+      return [...filtered].sort((a, b) => a.rent - b.rent);
+    }
+    return filtered;
+  }, [city, maxRent, gender, search, sortAsc]);
+
+  if (loading) {
+    return (
+      <View style={styles.loadingContainer}>
+        <ActivityIndicator size="large" />
+        <Text style={styles.loadingText}>Loading listings...</Text>
+      </View>
+    );
+  }
 
   return (
     <View style={styles.container}>
       <Text style={styles.title}>Find a room</Text>
-      <Text style={styles.subtitle}>Filter listings by city, rent, and gender.</Text>
 
       <Text style={styles.label}>City</Text>
-      <View style={styles.chipRow}>
+      <View style={styles.row}>
         {cities.map((c) => (
-          <Pressable
-            key={c}
-            onPress={() => setCity(c)}
-            style={[styles.chip, city === c && styles.chipActive]}
-          >
-            <Text style={[styles.chipText, city === c && styles.chipTextActive]}>
-              {c}
-            </Text>
+          <Pressable key={c} onPress={() => setCity(c)} style={styles.pill}>
+            <Text style={styles.pillText}>{city === c ? `[${c}]` : c}</Text>
           </Pressable>
         ))}
       </View>
 
       <Text style={styles.label}>Max Rent</Text>
-      <TextInput
-        keyboardType="numeric"
-        value={maxRent}
-        onChangeText={setMaxRent}
-        style={styles.input}
-        placeholder="Enter max rent"
-        placeholderTextColor="#8a8a8a"
-      />
+      <TextInput keyboardType="numeric" value={maxRent} onChangeText={setMaxRent} style={styles.input} />
 
       <Text style={styles.label}>Preferred Gender</Text>
-      <View style={styles.chipRow}>
+      <View style={styles.row}>
         {genders.map((g) => (
-          <Pressable
-            key={g}
-            onPress={() => setGender(g)}
-            style={[styles.chip, gender === g && styles.chipActive]}
-          >
-            <Text style={[styles.chipText, gender === g && styles.chipTextActive]}>
-              {g}
-            </Text>
+          <Pressable key={g} onPress={() => setGender(g)} style={styles.pill}>
+            <Text style={styles.pillText}>{gender === g ? `[${g}]` : g}</Text>
           </Pressable>
         ))}
       </View>
 
-      <Text style={styles.results}>{filteredData.length} results</Text>
+      <Text style={styles.label}>Search (title or locality)</Text>
+      <TextInput
+        value={search}
+        onChangeText={setSearch}
+        placeholder="e.g. Baner, studio, metro"
+        style={styles.input}
+      />
+
+      <Pressable onPress={() => setSortAsc((prev) => !prev)} style={styles.sortButton}>
+        <Text style={styles.sortText}>
+          Sort: Rent {sortAsc ? "(Low to High) ✓" : "(Low to High)"}
+        </Text>
+      </Pressable>
+
+      <Text style={styles.results}>Results: {filteredData.length}</Text>
 
       <FlatList
-        contentContainerStyle={styles.list}
         data={filteredData}
+        contentContainerStyle={styles.list}
         keyExtractor={(item) => item.id}
         ListEmptyComponent={<Text style={styles.empty}>No listings match your filters.</Text>}
         renderItem={({ item }) => (
@@ -91,10 +113,10 @@ export default function Index() {
             <Text style={styles.cardMeta}>
               {item.locality}, {item.city}
             </Text>
-            <Text style={styles.cardPrice}>₹{item.rent}/month</Text>
-            <Text style={styles.cardDetail}>{item.roomType}</Text>
-            <Text style={styles.cardDetail}>Preferred: {item.preferredGender}</Text>
-            <Text style={styles.cardDetail}>{item.furnished ? "Furnished" : "Unfurnished"}</Text>
+            <Text style={styles.cardMeta}>₹{item.rent}/month</Text>
+            <Text style={styles.cardMeta}>{item.roomType}</Text>
+            <Text style={styles.cardMeta}>Preferred: {item.preferredGender}</Text>
+            <Text style={styles.cardMeta}>{item.furnished ? "Furnished" : "Unfurnished"}</Text>
           </View>
         )}
       />
@@ -105,102 +127,91 @@ export default function Index() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    padding: 20,
-    backgroundColor: "#f5f7fb",
+    padding: 16,
+    backgroundColor: "#f7f7f7",
+  },
+  loadingContainer: {
+    flex: 1,
+    alignItems: "center",
+    justifyContent: "center",
+    gap: 10,
+  },
+  loadingText: {
+    color: "#444",
   },
   title: {
-    fontSize: 30,
+    fontSize: 24,
     fontWeight: "700",
-    color: "#10233f",
-    marginBottom: 4,
-  },
-  subtitle: {
-    fontSize: 14,
-    color: "#667085",
-    marginBottom: 18,
+    marginBottom: 12,
+    color: "#111",
   },
   label: {
-    fontSize: 14,
-    fontWeight: "600",
-    color: "#10233f",
     marginTop: 10,
-    marginBottom: 8,
+    marginBottom: 6,
+    fontWeight: "600",
+    color: "#222",
   },
-  chipRow: {
+  row: {
     flexDirection: "row",
     flexWrap: "wrap",
     gap: 8,
   },
-  chip: {
-    paddingHorizontal: 12,
-    paddingVertical: 8,
+  pill: {
+    paddingHorizontal: 10,
+    paddingVertical: 6,
+    borderWidth: 1,
+    borderColor: "#ccc",
     borderRadius: 999,
-    backgroundColor: "#e8edf5",
+    backgroundColor: "#fff",
   },
-  chipActive: {
-    backgroundColor: "#10233f",
-  },
-  chipText: {
-    fontSize: 13,
-    color: "#10233f",
-    fontWeight: "600",
-  },
-  chipTextActive: {
-    color: "#ffffff",
+  pillText: {
+    color: "#222",
   },
   input: {
     borderWidth: 1,
-    borderColor: "#d7deea",
-    backgroundColor: "#ffffff",
-    borderRadius: 12,
-    paddingHorizontal: 14,
-    paddingVertical: 12,
-    fontSize: 16,
-    color: "#10233f",
+    borderColor: "#ccc",
+    borderRadius: 8,
+    paddingHorizontal: 12,
+    paddingVertical: 10,
+    backgroundColor: "#fff",
+  },
+  sortButton: {
+    marginTop: 12,
+    alignSelf: "flex-start",
+  },
+  sortText: {
+    color: "#1f4b99",
+    fontWeight: "600",
   },
   results: {
-    marginTop: 18,
-    marginBottom: 12,
-    fontSize: 15,
+    marginTop: 14,
+    marginBottom: 8,
     fontWeight: "700",
-    color: "#10233f",
+    color: "#111",
   },
   list: {
-    paddingBottom: 24,
+    paddingBottom: 16,
   },
   empty: {
-    paddingVertical: 24,
+    marginTop: 20,
     textAlign: "center",
-    color: "#667085",
+    color: "#666",
   },
   card: {
-    backgroundColor: "#ffffff",
-    borderRadius: 16,
-    padding: 16,
-    marginBottom: 12,
+    backgroundColor: "#fff",
     borderWidth: 1,
-    borderColor: "#e4e9f2",
+    borderColor: "#e5e5e5",
+    borderRadius: 10,
+    padding: 12,
+    marginBottom: 10,
   },
   cardTitle: {
-    fontSize: 17,
     fontWeight: "700",
-    color: "#10233f",
+    color: "#111",
     marginBottom: 4,
   },
   cardMeta: {
-    fontSize: 13,
-    color: "#667085",
-    marginBottom: 10,
-  },
-  cardPrice: {
-    fontSize: 16,
-    fontWeight: "700",
-    color: "#0f766e",
-    marginBottom: 8,
-  },
-  cardDetail: {
-    fontSize: 13,
-    color: "#344054",
-    marginBottom: 4,
+    color: "#444",
+    marginBottom: 2,
   },
 });
