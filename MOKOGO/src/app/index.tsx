@@ -68,8 +68,12 @@ export default function Index() {
       <Text style={styles.label}>City</Text>
       <View style={styles.row}>
         {cities.map((c) => (
-          <Pressable key={c} onPress={() => setCity(c)} style={styles.pill}>
-            <Text style={styles.pillText}>{city === c ? `[${c}]` : c}</Text>
+          <Pressable
+            key={c}
+            onPress={() => setCity(c)}
+            style={[styles.pill, city === c && styles.pillActive]}
+          >
+            <Text style={[styles.pillText, city === c && styles.pillTextActive]}>{c}</Text>
           </Pressable>
         ))}
       </View>
@@ -80,8 +84,12 @@ export default function Index() {
       <Text style={styles.label}>Preferred Gender</Text>
       <View style={styles.row}>
         {genders.map((g) => (
-          <Pressable key={g} onPress={() => setGender(g)} style={styles.pill}>
-            <Text style={styles.pillText}>{gender === g ? `[${g}]` : g}</Text>
+          <Pressable
+            key={g}
+            onPress={() => setGender(g)}
+            style={[styles.pill, gender === g && styles.pillActive]}
+          >
+            <Text style={[styles.pillText, gender === g && styles.pillTextActive]}>{g}</Text>
           </Pressable>
         ))}
       </View>
@@ -164,8 +172,15 @@ const styles = StyleSheet.create({
     borderRadius: 999,
     backgroundColor: "#fff",
   },
+  pillActive: {
+    backgroundColor: "#000",
+    borderColor: "#000",
+  },
   pillText: {
     color: "#222",
+  },
+  pillTextActive: {
+    color: "#fff",
   },
   input: {
     borderWidth: 1,
