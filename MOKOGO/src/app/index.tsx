@@ -1,13 +1,5 @@
 import React, { useState, useMemo, useEffect } from "react";
-import {
-  View,
-  Text,
-  TextInput,
-  FlatList,
-  Pressable,
-  ActivityIndicator,
-  StyleSheet,
-} from "react-native";
+import { View,Text, TextInput, FlatList,Pressable,ActivityIndicator,StyleSheet,} from "react-native";
 import  data  from "./_data";
 
 export default function Index() {
