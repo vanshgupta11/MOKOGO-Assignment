@@ -28,9 +28,7 @@ export default function Index() {
       const cityMatch = city === "All" || item.city === city;
       const rentMatch = item.rent <= Number(maxRent || 0);
       const genderMatch =
-        gender === "Any" ||
-        item.preferredGender === "Any" ||
-        item.preferredGender === gender;
+        gender === "Any" ||item.preferredGender === "Any" || item.preferredGender === gender;
       const searchMatch =
         search.trim() === "" ||
         item.title.toLowerCase().includes(search.trim().toLowerCase()) ||
